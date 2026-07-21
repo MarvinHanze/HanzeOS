@@ -229,7 +229,19 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
     };
 
     const updateTargetPos = () => {
-      const el = document.querySelector(stepData.targetSelector) as HTMLElement | null;
+      let el = document.querySelector(stepData.targetSelector) as HTMLElement | null;
+      
+      // Handle fallback if target element is hidden on mobile viewports (e.g. hidden sm:flex)
+      if (el) {
+        const checkRect = el.getBoundingClientRect();
+        if (checkRect.width === 0 || checkRect.height === 0) {
+          // Fallback to visible container or main view if specific target is hidden on mobile
+          el = (document.querySelector("#tour-tenant-select") ||
+               document.querySelector("#tour-dashboard-main") ||
+               document.querySelector("header")) as HTMLElement | null;
+        }
+      }
+
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
         const rect = el.getBoundingClientRect();
@@ -305,29 +317,32 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
   let calloutStyle: React.CSSProperties = {};
 
   if (targetRect) {
+    const isMobile = window.innerWidth < 640;
+    const clampedLeft = Math.max(12, Math.min(window.innerWidth - 250, targetRect.left + targetRect.width / 2 - 100));
+
     if (targetRect.top < 120) {
       // Top bar elements (Navbar)
       arrowType = "up";
       calloutStyle = {
         position: "fixed",
-        top: `${Math.min(window.innerHeight - 80, targetRect.bottom + 14)}px`,
-        left: `${Math.max(16, Math.min(window.innerWidth - 300, targetRect.left + targetRect.width / 2 - 120))}px`,
+        top: `${Math.min(window.innerHeight - 80, targetRect.bottom + 12)}px`,
+        left: `${clampedLeft}px`,
       };
-    } else if (targetRect.left < 260) {
+    } else if (targetRect.left < 240 && !isMobile) {
       // Left sidebar elements
       arrowType = "left";
       calloutStyle = {
         position: "fixed",
         top: `${Math.max(70, Math.min(window.innerHeight - 80, targetRect.top + targetRect.height / 2 - 20))}px`,
-        left: `${Math.min(window.innerWidth - 320, targetRect.right + 16)}px`,
+        left: `${Math.min(window.innerWidth - 280, targetRect.right + 12)}px`,
       };
-    } else if (targetRect.left > window.innerWidth - 320) {
+    } else if (targetRect.left > window.innerWidth - 280 && !isMobile) {
       // Right edge elements
       arrowType = "right";
       calloutStyle = {
         position: "fixed",
         top: `${Math.max(70, Math.min(window.innerHeight - 80, targetRect.top + targetRect.height / 2 - 20))}px`,
-        left: `${Math.max(16, targetRect.left - 240)}px`,
+        left: `${Math.max(12, targetRect.left - 240)}px`,
       };
     } else {
       // Canvas / Main body elements
@@ -335,29 +350,29 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
         arrowType = "up";
         calloutStyle = {
           position: "fixed",
-          top: `${Math.min(window.innerHeight - 80, targetRect.bottom + 14)}px`,
-          left: `${Math.max(16, Math.min(window.innerWidth - 300, targetRect.left + targetRect.width / 2 - 120))}px`,
+          top: `${Math.min(window.innerHeight - 80, targetRect.bottom + 12)}px`,
+          left: `${clampedLeft}px`,
         };
       } else {
         arrowType = "down";
         calloutStyle = {
           position: "fixed",
-          top: `${Math.max(70, targetRect.top - 58)}px`,
-          left: `${Math.max(16, Math.min(window.innerWidth - 300, targetRect.left + targetRect.width / 2 - 120))}px`,
+          top: `${Math.max(60, targetRect.top - 54)}px`,
+          left: `${clampedLeft}px`,
         };
       }
     }
   }
 
-  // SMART NON-BLOCKING CARD POSITIONING
-  let cardPositionClass = "bottom-6 right-6 sm:bottom-8 sm:right-8";
+  // SMART NON-BLOCKING RESPONSIVE CARD POSITIONING
+  let cardPositionClass = "bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 md:bottom-8 md:right-8";
   if (targetRect) {
     const isBottomHalf = targetRect.top > window.innerHeight * 0.55;
     const isRightHalf = targetRect.left > window.innerWidth * 0.5;
     if (isBottomHalf && isRightHalf) {
-      cardPositionClass = "bottom-6 left-6 sm:bottom-8 sm:left-8";
+      cardPositionClass = "bottom-3 left-3 right-3 sm:right-auto sm:left-6 sm:bottom-6 md:bottom-8 md:left-8";
     } else if (isBottomHalf) {
-      cardPositionClass = "top-20 right-6 sm:right-8";
+      cardPositionClass = "top-16 left-3 right-3 sm:left-auto sm:right-6 sm:top-20 md:right-8";
     }
   }
 
@@ -370,10 +385,10 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
             <mask id="tour-spotlight-hole">
               <rect x="0" y="0" width="100%" height="100%" fill="white" />
               <rect
-                x={Math.max(0, targetRect.left - 8)}
-                y={Math.max(0, targetRect.top - 8)}
-                width={targetRect.width + 16}
-                height={targetRect.height + 16}
+                x={Math.max(0, targetRect.left - 6)}
+                y={Math.max(0, targetRect.top - 6)}
+                width={Math.min(window.innerWidth, targetRect.width + 12)}
+                height={targetRect.height + 12}
                 rx="16"
                 fill="black"
               />
@@ -397,10 +412,10 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
           <div
             className="fixed rounded-2xl pointer-events-none transition-all duration-300 ring-4 ring-indigo-500/90 shadow-[0_0_35px_rgba(99,102,241,0.8)] z-45 animate-pulse"
             style={{
-              top: `${Math.max(0, targetRect.top - 8)}px`,
-              left: `${Math.max(0, targetRect.left - 8)}px`,
-              width: `${targetRect.width + 16}px`,
-              height: `${targetRect.height + 16}px`,
+              top: `${Math.max(0, targetRect.top - 6)}px`,
+              left: `${Math.max(0, targetRect.left - 6)}px`,
+              width: `${Math.min(window.innerWidth, targetRect.width + 12)}px`,
+              height: `${targetRect.height + 12}px`,
             }}
           />
 
@@ -409,12 +424,12 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
             className="fixed z-50 pointer-events-none transition-all duration-300"
             style={calloutStyle}
           >
-            <div className="bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-2xl border-2 border-amber-400 flex items-center gap-2.5 animate-bounce">
-              {arrowType === "up" && <ArrowUp className="w-5 h-5 text-amber-300 flex-shrink-0" />}
-              {arrowType === "left" && <ArrowLeft className="w-5 h-5 text-amber-300 flex-shrink-0" />}
-              {arrowType === "down" && <ArrowDown className="w-5 h-5 text-amber-300 flex-shrink-0" />}
-              {arrowType === "right" && <ArrowRight className="w-5 h-5 text-amber-300 flex-shrink-0" />}
-              <span className="text-xs font-black tracking-wide whitespace-nowrap">
+            <div className="bg-slate-900 text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl shadow-2xl border-2 border-amber-400 flex items-center gap-2 sm:gap-2.5 animate-bounce max-w-[calc(100vw-2rem)]">
+              {arrowType === "up" && <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 flex-shrink-0" />}
+              {arrowType === "left" && <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 flex-shrink-0" />}
+              {arrowType === "down" && <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 flex-shrink-0" />}
+              {arrowType === "right" && <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 flex-shrink-0" />}
+              <span className="text-[11px] sm:text-xs font-black tracking-wide truncate">
                 {stepData.pointerLabel}
               </span>
             </div>
@@ -423,53 +438,53 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
       )}
 
       {/* SMART NON-BLOCKING TOUR CARD POPOVER */}
-      <div className={`fixed ${cardPositionClass} max-w-lg w-[calc(100%-2rem)] z-[60] transition-all duration-300`}>
-        <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 relative overflow-hidden">
+      <div className={`fixed ${cardPositionClass} max-w-lg z-[60] transition-all duration-300`}>
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl border border-slate-200 space-y-3.5 sm:space-y-5 relative overflow-hidden">
           
           {/* TOP COLOR ACCENT BAR */}
-          <div className={`absolute top-0 left-0 right-0 h-2 bg-gradient-to-r ${stepData.color}`} />
+          <div className={`absolute top-0 left-0 right-0 h-1.5 sm:h-2 bg-gradient-to-r ${stepData.color}`} />
 
           {/* CLOSE BUTTON */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
             title={language === "nl" ? "Tour sluiten" : "Close tour"}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* HEADER & STEP BADGE */}
-          <div className="flex items-start gap-4 pr-8">
+          <div className="flex items-start gap-3 sm:gap-4 pr-6 sm:pr-8">
             <div
-              className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stepData.color} text-white flex items-center justify-center flex-shrink-0 shadow-md`}
+              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br ${stepData.color} text-white flex items-center justify-center flex-shrink-0 shadow-md`}
             >
-              <IconComponent className="w-6 h-6" />
+              <IconComponent className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 font-extrabold text-[10px] rounded-full uppercase tracking-wider border border-indigo-100 flex items-center gap-1">
+                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-extrabold text-[9px] sm:text-[10px] rounded-full uppercase tracking-wider border border-indigo-100 flex items-center gap-1">
                   <Compass className="w-3 h-3 text-indigo-600" />
                   {language === "nl"
                     ? `Stap ${currentStep + 1} van ${steps.length}`
                     : `Step ${currentStep + 1} of ${steps.length}`}
                 </span>
               </div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight mt-1">
+              <h2 className="text-sm sm:text-lg font-black text-slate-900 tracking-tight mt-0.5">
                 {stepData.title}
               </h2>
-              <p className="text-xs font-semibold text-slate-500">{stepData.subtitle}</p>
+              <p className="text-[11px] sm:text-xs font-semibold text-slate-500 leading-tight">{stepData.subtitle}</p>
             </div>
           </div>
 
           {/* STEPPER PROGRESS BARS */}
-          <div className="flex items-center gap-1.5 pt-1">
+          <div className="flex items-center gap-1 pt-0.5 sm:pt-1">
             {steps.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => {
                   setCurrentStep(idx);
                 }}
-                className={`flex-1 h-2 rounded-full transition-all ${
+                className={`flex-1 h-1.5 sm:h-2 rounded-full transition-all ${
                   idx === currentStep
                     ? "bg-indigo-600 ring-2 ring-indigo-200"
                     : idx < currentStep
@@ -481,21 +496,21 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
           </div>
 
           {/* VISUAL LOCATION BADGE */}
-          <div className="p-2.5 bg-slate-900 rounded-2xl text-white text-xs font-bold flex items-center justify-between gap-2 shadow-xs">
+          <div className="p-2 sm:p-2.5 bg-slate-900 rounded-xl sm:rounded-2xl text-white text-[11px] sm:text-xs font-bold flex items-center justify-between gap-2 shadow-xs">
             <div className="flex items-center gap-2 truncate">
-              <Target className="w-4 h-4 text-amber-400 flex-shrink-0 animate-pulse" />
+              <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0 animate-pulse" />
               <span className="truncate">{stepData.pointerLabel}</span>
             </div>
-            <span className="text-[10px] bg-indigo-600 px-2 py-0.5 rounded-lg text-white font-black uppercase flex-shrink-0">
+            <span className="text-[9px] sm:text-[10px] bg-indigo-600 px-1.5 py-0.5 rounded-md text-white font-black uppercase flex-shrink-0">
               Interactief
             </span>
           </div>
 
           {/* DESCRIPTION CONTENT */}
-          <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
+          <div className="space-y-2.5 text-xs text-slate-600 leading-relaxed">
             <p className="text-xs sm:text-sm text-slate-700 font-medium">{stepData.description}</p>
 
-            <div className="p-3 bg-indigo-50/80 rounded-2xl border border-indigo-100 text-indigo-900 font-semibold flex items-start gap-2.5">
+            <div className="p-2.5 sm:p-3 bg-indigo-50/80 rounded-xl sm:rounded-2xl border border-indigo-100 text-indigo-900 font-semibold flex items-start gap-2 text-[11px] sm:text-xs">
               <HighlightIconComponent className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
               <span>{stepData.highlightText}</span>
             </div>
@@ -506,33 +521,33 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+              className="px-2.5 py-1.5 sm:px-3.5 sm:py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1 transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" />
-              {language === "nl" ? "Vorige" : "Previous"}
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">{language === "nl" ? "Vorige" : "Previous"}</span>
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={onClose}
-                className="px-3 py-2 text-slate-500 hover:text-slate-800 font-bold text-xs rounded-xl transition-colors"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 text-slate-500 hover:text-slate-800 font-bold text-xs rounded-xl transition-colors"
               >
-                {language === "nl" ? "Sla Tour Over" : "Skip Tour"}
+                {language === "nl" ? "Overslaan" : "Skip"}
               </button>
 
               <button
                 onClick={handleNext}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 uppercase tracking-wider"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1 uppercase tracking-wider"
               >
                 {currentStep === steps.length - 1 ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-amber-300" />
-                    {language === "nl" ? "Klaar & Starten" : "Finish Tour"}
+                    <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
+                    <span>{language === "nl" ? "Klaar" : "Finish"}</span>
                   </>
                 ) : (
                   <>
-                    {language === "nl" ? "Volgende" : "Next"}
-                    <ChevronRight className="w-4 h-4" />
+                    <span>{language === "nl" ? "Volgende" : "Next"}</span>
+                    <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </>
                 )}
               </button>
