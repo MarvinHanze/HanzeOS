@@ -1,0 +1,6 @@
+{
+  "name": "HanzeOS",
+  "description": "Het modulaire SaaS-bedrijfsplatform voor MKB en ZZP - Beheer CRM, Projecten, Facturatie, HR, Voorraad & ESG.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
