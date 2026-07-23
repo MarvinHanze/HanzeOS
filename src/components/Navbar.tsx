@@ -60,11 +60,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
-          
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
+
           {/* LOGO & TENANT SWITCHER */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <div className="flex items-center gap-2.5 cursor-pointer" onClick={onOpenSubscription}>
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-xs transition-transform hover:scale-105"
@@ -85,14 +85,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="h-6 w-px bg-slate-200 hidden sm:block" />
 
             {/* TENANT SELECTOR DROPDOWN */}
-            <div className="relative" id="tour-tenant-select">
+            <div className="relative min-w-0" id="tour-tenant-select">
               <button
                 onClick={() => setShowTenantDropdown(!showTenantDropdown)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold transition-colors"
+                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold transition-colors min-w-0"
               >
-                <Building2 className="w-4 h-4 text-slate-500" />
-                <span className="max-w-[130px] sm:max-w-[180px] truncate">{currentTenant.name}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <Building2 className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="max-w-[70px] sm:max-w-[130px] md:max-w-[180px] truncate">{currentTenant.name}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               </button>
 
               {showTenantDropdown && (
@@ -156,14 +156,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* RIGHT ACTION CONTROLS */}
-          <div className="flex items-center gap-2">
-            
-            {/* INTERACTIVE TOUR BUTTON */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+
+            {/* INTERACTIVE TOUR BUTTON — hidden below sm: on a 375px phone the full
+                cluster (tenant selector + tour + role + language + bell) doesn't fit
+                in one row and forced the page to scroll horizontally; this is the
+                least essential item here (the other low-priority actions, Modules
+                and the subscription badge, already follow this same hidden-on-mobile
+                pattern below). */}
             {onOpenTour && (
               <button
                 id="tour-tour-btn"
                 onClick={onOpenTour}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition-colors shadow-2xs"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition-colors shadow-2xs"
                 title="Start Interactieve Tour"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
@@ -186,10 +191,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {/* ROLE SWITCHER FOR DEMO (RBAC) */}
-            <div className="relative" id="tour-role-select">
+            <div className="relative shrink-0" id="tour-role-select">
               <button
                 onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
                 title="Wissel Gebruikersrol (Demo RBAC)"
               >
                 <Shield className="w-3.5 h-3.5 text-slate-500" />
@@ -224,11 +229,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* LANGUAGE TOGGLE */}
             <button
               onClick={() => onChangeLanguage(language === "nl" ? "en" : "nl")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
               title="Wissel Taal"
             >
               <Globe className="w-3.5 h-3.5 text-slate-500" />
-              <span className="uppercase">{language}</span>
+              <span className="hidden sm:inline uppercase">{language}</span>
             </button>
 
             {/* NOTIFICATIONS */}
