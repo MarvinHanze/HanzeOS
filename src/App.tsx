@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import {
   INITIAL_TENANTS,
   INITIAL_CONTACTS,
@@ -38,14 +38,18 @@ import {
 
 import { Navbar } from "./components/Navbar";
 import { Sidebar } from "./components/Sidebar";
-import { DashboardView } from "./components/DashboardView";
-import { CrmView } from "./components/CrmView";
-import { ProjectsView } from "./components/ProjectsView";
-import { InvoicingView } from "./components/InvoicingView";
-import { HrView } from "./components/HrView";
-import { InventoryView } from "./components/InventoryView";
-import { EsgView } from "./components/EsgView";
-import { AiSupportView } from "./components/AiSupportView";
+
+// Code-split per tab: only the module a tenant actually clicks into gets
+// downloaded, instead of bundling all 8 feature views (+ their chart/AI
+// dependencies) into everyone's first load.
+const DashboardView = lazy(() => import("./components/DashboardView").then((m) => ({ default: m.DashboardView })));
+const CrmView = lazy(() => import("./components/CrmView").then((m) => ({ default: m.CrmView })));
+const ProjectsView = lazy(() => import("./components/ProjectsView").then((m) => ({ default: m.ProjectsView })));
+const InvoicingView = lazy(() => import("./components/InvoicingView").then((m) => ({ default: m.InvoicingView })));
+const HrView = lazy(() => import("./components/HrView").then((m) => ({ default: m.HrView })));
+const InventoryView = lazy(() => import("./components/InventoryView").then((m) => ({ default: m.InventoryView })));
+const EsgView = lazy(() => import("./components/EsgView").then((m) => ({ default: m.EsgView })));
+const AiSupportView = lazy(() => import("./components/AiSupportView").then((m) => ({ default: m.AiSupportView })));
 
 import { MarketplaceModal } from "./components/MarketplaceModal";
 import { SubscriptionModal } from "./components/SubscriptionModal";
@@ -308,6 +312,13 @@ export default function App() {
 
         {/* MAIN VIEW CONTENT */}
         <main className="lg:col-span-9 space-y-6">
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-64 text-slate-400 text-sm">
+              Laden...
+            </div>
+          }
+        >
           {activeTab === "dashboard" && (
             <DashboardView
               currentTenant={currentTenant}
@@ -394,6 +405,7 @@ export default function App() {
           {activeTab === "support" && (
             <AiSupportView currentTenant={currentTenant} language={language} />
           )}
+        </Suspense>
         </main>
       </div>
 

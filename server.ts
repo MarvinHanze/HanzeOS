@@ -1,14 +1,29 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Minimal in-memory sliding-window rate limiter for the AI endpoints — these
+// call an external, metered API with no per-user auth in front of them, so
+// an unlimited endpoint is both a cost risk and a DoS vector once
+// GEMINI_API_KEY is actually configured in production.
+const aiRequestLog = new Map<string, number[]>();
+function checkAiRateLimit(ip: string, maxRequests = 10, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const hits = (aiRequestLog.get(ip) || []).filter((t) => now - t < windowMs);
+  if (hits.length >= maxRequests) {
+    aiRequestLog.set(ip, hits);
+    return false;
+  }
+  hits.push(now);
+  aiRequestLog.set(ip, hits);
+  return true;
+}
+
+const MAX_AI_INPUT_LENGTH = 4000;
 
 async function startServer() {
   const app = express();
@@ -39,8 +54,16 @@ async function startServer() {
 
   // AI Assistant Chat Route for Dutch MKB Advice & System Help
   app.post("/api/ai/chat", async (req, res) => {
+    if (!checkAiRateLimit(req.ip || "unknown")) {
+      res.status(429).json({ error: "Te veel verzoeken. Probeer het over een minuut opnieuw." });
+      return;
+    }
     try {
       const { message, history, companyContext, lang } = req.body;
+      if (typeof message !== "string" || message.length === 0 || message.length > MAX_AI_INPUT_LENGTH) {
+        res.status(400).json({ error: "Ongeldig bericht." });
+        return;
+      }
       const ai = getGenAI();
 
       const systemInstruction = `
@@ -74,19 +97,27 @@ Geef altijd een professioneel, praktisch en vriendelijk antwoord. Gebruik duidel
         ],
       });
 
-      res.json({ reply: response.text || "Exposanten antwoord niet beschikbaar." });
+      res.json({ reply: response.text || "Antwoord niet beschikbaar." });
     } catch (error: any) {
       console.error("Gemini AI Chat Error:", error);
       res.status(500).json({
-        error: error.message || "Er is een fout opgetreden bij het verwerken van uw AI-vraag.",
+        error: "Er is een fout opgetreden bij het verwerken van uw AI-vraag.",
       });
     }
   });
 
   // AI Invoice & Quote Text Generator Endpoint
   app.post("/api/ai/invoice-assist", async (req, res) => {
+    if (!checkAiRateLimit(req.ip || "unknown")) {
+      res.status(429).json({ error: "Te veel verzoeken. Probeer het over een minuut opnieuw." });
+      return;
+    }
     try {
       const { promptText, type } = req.body;
+      if (typeof promptText !== "string" || promptText.length === 0 || promptText.length > MAX_AI_INPUT_LENGTH) {
+        res.status(400).json({ error: "Ongeldige invoer." });
+        return;
+      }
       const ai = getGenAI();
 
       const prompt = type === "reminder"
@@ -101,7 +132,7 @@ Geef altijd een professioneel, praktisch en vriendelijk antwoord. Gebruik duidel
       res.json({ result: response.text });
     } catch (error: any) {
       console.error("Gemini AI Invoice Assist Error:", error);
-      res.status(500).json({ error: error.message || "AI assistent kon niet worden ingeschakeld." });
+      res.status(500).json({ error: "AI assistent kon niet worden ingeschakeld." });
     }
   });
 
