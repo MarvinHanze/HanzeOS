@@ -12,6 +12,7 @@ import {
   CreditCard,
   Settings,
   Sparkles,
+  ArrowUpRight,
 } from "lucide-react";
 import { Tenant, Language } from "../types";
 
@@ -95,8 +96,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
+  const enabledModulesCount = Object.values(activeModules).filter(Boolean).length;
+  const totalModulesCount = Object.values(activeModules).length;
+  const planLabels: Record<Tenant["planTier"], { nl: string; en: string }> = {
+    starter: { nl: "Starter", en: "Starter" },
+    business: { nl: "Business", en: "Business" },
+    enterprise: { nl: "Enterprise", en: "Enterprise" },
+  };
+
   return (
-    <aside className="w-full h-full bg-white text-slate-800 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between p-3 lg:p-4">
+    <aside className="w-full h-full bg-white text-slate-800 rounded-2xl border border-slate-200 shadow-2xs flex flex-col p-3 lg:p-4">
       <div className="space-y-3 lg:space-y-6">
 
         {/* TENANT BRANDING CARD — hidden below lg: the navbar's tenant switcher already
@@ -155,12 +164,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
             })}
           </div>
         </nav>
+
+        {/* ABONNEMENT/MODULES-STATUSKAART — vult de ruimte die anders leeg bleef tussen de
+            (korte) navigatielijst en de onderste knoppen, en maakt in één oogopslag duidelijk
+            welk plan actief is en hoeveel modules daarvan gebruikt worden (i.p.v. alleen het
+            kleine "7/7"-badge in de navbar hierboven). Alleen op desktop: op mobiel is de
+            aside al kort en zou dit de content verder omlaag duwen. */}
+        <div className="hidden lg:block p-3.5 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest">
+              {language === "nl" ? "Abonnement" : "Subscription"}
+            </span>
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-600 text-white rounded-full">
+              {planLabels[currentTenant.planTier][language]}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs text-slate-600 mb-1.5">
+            <span>{language === "nl" ? "Actieve modules" : "Active modules"}</span>
+            <span className="font-bold text-slate-800 tabular-nums">
+              {enabledModulesCount} / {totalModulesCount}
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-indigo-100 rounded-full overflow-hidden mb-3">
+            <div
+              className="h-full bg-indigo-600 rounded-full transition-all"
+              style={{ width: `${(enabledModulesCount / totalModulesCount) * 100}%` }}
+            />
+          </div>
+          <button
+            onClick={onOpenMarketplace}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-xl transition-colors"
+          >
+            <span>
+              {enabledModulesCount >= totalModulesCount
+                ? (language === "nl" ? "Bekijk App Store" : "Browse App Store")
+                : (language === "nl" ? "Meer modules activeren" : "Activate more modules")}
+            </span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* BOTTOM ACTIONS (desktop) — see the compact lg:hidden variant right below
           for small screens; the Modules button in the navbar is hidden below lg:,
           so one of these two variants is always the mobile entry point for it. */}
-      <div className="hidden lg:block pt-4 border-t border-slate-100 space-y-1.5">
+      <div className="hidden lg:block pt-4 mt-auto border-t border-slate-100 space-y-1.5">
         <button
           onClick={onOpenMarketplace}
           className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-colors"

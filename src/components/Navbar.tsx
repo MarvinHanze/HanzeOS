@@ -185,8 +185,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Grid className="w-3.5 h-3.5 text-indigo-600" />
               <span>{language === "nl" ? "Modules" : "Modules"}</span>
-              <span className="ml-0.5 px-1.5 py-0.2 text-[10px] bg-indigo-600 text-white font-bold rounded-full">
-                {enabledModulesCount}/7
+              {/* Twee cijfers direct naast een "/" op 10px lazen als één getal (bv. "7/7" oogde
+                  als "717") — expliciete spatiëring om dat te voorkomen, i.p.v. kleiner lettertype. */}
+              <span className="ml-0.5 px-1.5 py-0.2 text-[10px] bg-indigo-600 text-white font-bold rounded-full tabular-nums">
+                {enabledModulesCount} / 7
               </span>
             </button>
 
